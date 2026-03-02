@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PXLS — Image Toy</title>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css"/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body class="dark">
+
+<div id="canvas-host"><canvas id="main-canvas"></canvas></div>
+
+<div id="wm">PXLS <span>image toy</span></div>
+<button id="theme-btn" onclick="toggleTheme()">☀</button>
+
+<div id="toast"></div>
+<div class="snap" id="snap-l" style="left:0"></div>
+<div class="snap" id="snap-r" style="right:0"></div>
+
+<!-- Navigation Arrows -->
+<button class="nav-arrow nav-arrow-left" id="nav-left" onclick="navigatePhoto(-1)" title="Previous image (←)">
+  <span>‹</span>
+</button>
+<button class="nav-arrow nav-arrow-right" id="nav-right" onclick="navigatePhoto(1)" title="Next image (→)">
+  <span>›</span>
+</button>
+
+<div id="kbh">
+  <kbd>Enter</kbd> fullscreen
+  <kbd>Tab</kbd> hide UI
+  <kbd>←</kbd> <kbd>→</kbd> navigate
+  <kbd>R</kbd> reset
+</div>
+
+<!-- PALETTE: API Key -->
+<div class="palette" id="pal-api" style="left:20px; top:70px; width:296px;">
+  <div class="pal-bar" id="bar-api">
+    <span class="pal-icon">⊡</span>
+    <span class="pal-name">API Key</span>
+    <button class="pal-coll" id="coll-api" onclick="toggleCollapse('api')">▾</button>
+  </div>
+  <div class="pal-body" id="body-api" style="max-height:120px">
+    <div class="psec">
+      <div class="irow">
+        <input class="tinp" id="api-key" type="password" placeholder="Pexels API key…" oninput="saveApiKey(this.value)"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PALETTE: Search -->
+<div class="palette" id="pal-search" style="left:20px; top:210px; width:296px;">
+  <div class="pal-bar" id="bar-search">
+    <span class="pal-icon">⌕</span>
+    <span class="pal-name">Search</span>
+    <button class="pal-coll" id="coll-search" onclick="toggleCollapse('search')">▾</button>
+  </div>
+  <div class="pal-body" id="body-search" style="max-height:800px">
+    <div class="psec">
+      <div class="irow">
+        <input class="tinp" id="search-query" type="text" placeholder="Search images…"
+          onkeydown="if(event.key==='Enter'){event.stopPropagation();doSearch(true)}"
+        />
+        <button class="abtn" id="search-btn" onclick="doSearch(true)">Go</button>
+      </div>
+    </div>
+    <div id="results-area">
+      <div class="empty"><span class="eico">⊡</span>Enter a search term</div>
+    </div>
+  </div>
+</div>
+
+<!-- PALETTE: Extracted Colors -->
+<div class="palette" id="pal-colors" style="width:296px; top:390px; display:none;">
+  <div class="pal-bar" id="bar-colors">
+    <span class="pal-icon">◐</span>
+    <span class="pal-name">Extracted Colors</span>
+    <button class="pal-coll" id="coll-colors" onclick="toggleCollapse('colors')">▾</button>
+  </div>
+  <div class="pal-body" id="body-colors" style="max-height:380px">
+    <div class="psec">
+      <div id="extracted-colors-grid" class="colors-grid"></div>
+    </div>
+    <div class="dlarea" id="colors-copy-area" style="display:none">
+      <button class="dlbtn" id="copy-btn" onclick="copyHslArray()">
+        <span>↓</span> Copy HSL Array
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PALETTE: Image Control -->
+<div class="palette" id="pal-control" style="width:296px; top:70px; display:none;">
+  <div class="pal-bar" id="bar-control">
+    <span class="pal-icon">◈</span>
+    <span class="pal-name">Image Control</span>
+    <button class="pal-coll" id="coll-control" onclick="toggleCollapse('control')">▾</button>
+  </div>
+  <div class="pal-body" id="body-control" style="max-height:380px">
+    <div class="psec">
+      <div class="frow">
+        <span class="flbl">Blur</span>
+        <input class="fsl" type="range" min="0" max="400" value="0" id="f-blur" oninput="onFilter('blur',+this.value)"/>
+        <span class="fval" id="v-blur">0px</span>
+        <button class="frst" onclick="resetFilter('blur')">×</button>
+      </div>
+      <div class="frow">
+        <span class="flbl">Bright</span>
+        <input class="fsl" type="range" min="-100" max="100" value="0" id="f-brightness" oninput="onFilter('brightness',+this.value)"/>
+        <span class="fval" id="v-brightness">0</span>
+        <button class="frst" onclick="resetFilter('brightness')">×</button>
+      </div>
+      <div class="frow">
+        <span class="flbl">Contrast</span>
+        <input class="fsl" type="range" min="-100" max="100" value="0" id="f-contrast" oninput="onFilter('contrast',+this.value)"/>
+        <span class="fval" id="v-contrast">0</span>
+        <button class="frst" onclick="resetFilter('contrast')">×</button>
+      </div>
+      <div class="frow">
+        <span class="flbl">Saturate</span>
+        <input class="fsl" type="range" min="-100" max="100" value="0" id="f-saturation" oninput="onFilter('saturation',+this.value)"/>
+        <span class="fval" id="v-saturation">0</span>
+        <button class="frst" onclick="resetFilter('saturation')">×</button>
+      </div>
+      <div style="margin-top:10px;text-align:right">
+        <button class="abtn sec" style="font-size:11px" onclick="resetAllFilters()">Reset all</button>
+      </div>
+    </div>
+    <div class="dlarea">
+      <div id="res-info" class="resinfo" style="display:none"></div>
+      <button class="dlbtn" id="dl-btn" disabled onclick="triggerDownload()">
+        <span>↓</span> Save PNG (32-bit)
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
