@@ -1,0 +1,133 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   DRAGGABLE PALETTE SYSTEM
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* Palette Container */
+.palette {
+  position: fixed;
+  min-width: 260px;
+  border-radius: 10px;
+  border: 1px solid var(--bhi);
+  background: var(--surf);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 200;
+  transition: border-color .18s, box-shadow .18s;
+}
+
+.palette.dock-l {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.palette.dock-r {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.palette.focused {
+  box-shadow: 0 12px 60px rgba(0, 0, 0, .5), 0 0 0 1.5px var(--ac);
+}
+
+/* Palette Title Bar (draggable) */
+.pal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: grab;
+  border-bottom: 1px solid var(--bdr);
+  user-select: none;
+  background: transparent;
+}
+
+.pal-bar:active {
+  cursor: grabbing;
+}
+
+.pal-icon {
+  font-size: 14px;
+}
+
+.pal-name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+/* Collapse Button */
+.pal-coll {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid var(--bdr);
+  background: transparent;
+  color: var(--tx2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  transition: all .18s;
+}
+
+.pal-coll:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+  background: var(--acd);
+}
+
+/* Palette Body (collapsible) */
+.pal-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: max-height .26s ease, opacity .2s;
+}
+
+.pal-body.shut {
+  max-height: 0 !important;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.pal-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.pal-body::-webkit-scrollbar-thumb {
+  background: var(--scrb);
+  border-radius: 2px;
+}
+
+/* Palette Section */
+.psec {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--bdr);
+}
+
+.psec:last-child {
+  border-bottom: none;
+}
+
+/* Download Area */
+.dlarea {
+  padding: 11px 12px;
+}
+
+.resinfo {
+  font-size: 11px;
+  color: var(--tx2);
+  margin-bottom: 8px;
+}
+
+.resinfo strong {
+  color: var(--tx);
+}

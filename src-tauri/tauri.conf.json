@@ -1,9 +1,10 @@
 {
   "build": {
-    "beforeBuildCommand": "",
+    "beforeBuildCommand": "rm -rf dist && mkdir -p dist && cp index.html app.js dist/ && cp -r css lib dist/",
     "beforeDevCommand": "",
     "devPath": "../",
-    "distDir": "../"
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "PXLS Editor",
@@ -27,22 +28,27 @@
         "unminimize": true,
         "startDragging": true
       },
+      "dialog": {
+        "all": false,
+        "save": true
+      },
       "fs": {
         "all": false,
         "readFile": false,
-        "writeFile": false,
+        "writeFile": true,
         "readDir": false,
         "copyFile": false,
         "createDir": false,
         "removeDir": false,
         "removeFile": false,
         "renameFile": false,
-        "exists": false
+        "exists": false,
+        "scope": ["$DOWNLOAD/*", "$DESKTOP/*", "$DOCUMENT/*", "$HOME/*"]
       }
     },
     "bundle": {
       "active": true,
-      "category": "Graphics",
+      "category": "Graphics and Design",
       "copyright": "",
       "deb": {
         "depends": []
@@ -74,7 +80,7 @@
       }
     },
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https://api.pexels.com https://images.pexels.com; img-src 'self' https://images.pexels.com data: blob:; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' https://rsms.me; script-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; connect-src 'self' https://api.pexels.com https://images.pexels.com; img-src 'self' https://images.pexels.com data: blob:; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' https://rsms.me; script-src 'self'"
     },
     "updater": {
       "active": false

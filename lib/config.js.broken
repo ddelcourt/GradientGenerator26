@@ -1,0 +1,57 @@
+// ═════════════════════════════════════════════════════════
+// CONFIGURATION
+//───────────────────────────────────────────────────────
+// To embed your Pexels API key:
+// 1. Run: node encrypt-key.js "your-actual-api-key"
+// 2. Copy the encrypted output
+// 3. Paste it here as the value
+// 4. The API key input palette will hide automatically
+//
+// Leave empty string '' to require users to enter their own key
+export const API = 'BEEtH0dnC1o0TVgEdn9gBwoOLyJ8c3luNR4nIXF7fXgyFg4VWl1lTDgvJQBWaH1VFTAgGVADA1c=';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// APP SETTINGS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Auto-detect environment and set proxy URL
+const isLocalhost = window.location.hostname === 'localhost' 
+                 || window.location.hostname === '127.0.0.1'
+                 || window.location.hostname.includes('localhost');
+
+// Use Node.js proxy for localhost, PHP proxy for production
+const PROXY_BASE = isLocalhost 
+  ? 'http://localhost:3131'  // Node.js proxy (proxy.js)
+  : window.location.origin;   // PHP proxy (proxy.php) at same origin
+
+export const CONFIG = {
+  // Proxy configuration
+  PROXY_BASE,
+  IS_LOCALHOST: isLocalhost,
+  
+  // Proxy endpoints
+  PROXY_SEARCH: isLocalhost 
+    ? `${PROXY_BASE}/search`
+    : `${PROXY_BASE}/proxy.php`,
+  
+  PROXY_IMAGE: isLocalhost
+    ? `${PROXY_BASE}/img`
+    : `${PROXY_BASE}/proxy.php`,
+  
+  // Search settings
+  PEXELS_PER_PAGE: 21,
+  RANDOM_PAGE_RANGE: 10, // Pick from first N pages for variety
+  
+  // LocalStorage keys
+  STORAGE_KEYS: {
+    API_KEY: 'pxls_ak',
+    THEME: 'pxls_theme',
+    PALETTE_PREFIX: 'pxls3_'
+  },
+  
+  // Theme
+  DEFAULT_THEME: 'dark',
+  
+  // Toast duration (ms)
+  TOAST_DURATION: 2400
+};

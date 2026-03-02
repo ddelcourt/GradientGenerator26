@@ -1,0 +1,40 @@
+# Tauri Ignore File
+# Files and directories to exclude from the Tauri bundle
+
+# Dependencies
+node_modules/
+src-tauri/
+
+# Development files
+.git/
+.gitignore
+.vscode/
+
+# Backup files
+_ bak/
+*.bak
+*_backup.*
+
+# Build outputs (don't include build artifacts)
+dist/
+build/
+
+# Documentation
+Documentation/
+*.md
+!README.md
+
+# Development scripts
+proxy.js
+proxy.php
+encrypt-key.js
+launch.sh
+stop.sh
+
+# Sensitive files
+Pexels Api Key.txt
+lib/config.js.example
+
+# System files
+.DS_Store
+Thumbs.db

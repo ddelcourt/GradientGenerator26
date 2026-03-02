@@ -1,0 +1,74 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   TAURI PERFORMANCE OPTIMIZATIONS
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* Force hardware acceleration for all elements with transforms */
+* {
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+}
+
+/* Optimize palette backdrop filters - reduce blur intensity */
+.palette {
+  backdrop-filter: blur(12px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
+  will-change: transform;
+}
+
+/* Add hardware acceleration hints to animated elements */
+.titem img,
+.color-swatch,
+.abtn,
+.dlbtn,
+.pal-coll,
+.nav-arrow {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Optimize toast animations */
+#toast {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Reduce transition durations for snappier feel */
+.palette,
+.pal-body,
+.titem,
+.color-swatch {
+  transition-duration: 0.12s !important;
+}
+
+/* Optimize canvas rendering */
+#main-canvas {
+  will-change: contents;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Ensure smooth scrolling */
+.pal-body {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Reduce theme transition time */
+html, body {
+  transition-duration: 0.15s !important;
+}
+
+/* Optimize thumbnail grid */
+.tgrid {
+  contain: layout style paint;
+}
+
+.titem {
+  contain: layout style;
+}
+
+/* Optimize image loading */
+.titem img {
+  image-rendering: -webkit-optimize-contrast;
+}

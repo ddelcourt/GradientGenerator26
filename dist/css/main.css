@@ -1,0 +1,14 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   PEXELS EDITOR - MAIN STYLESHEET
+   Modular CSS Architecture
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* Import modular stylesheets in order of specificity */
+@import url('reset.css');        /* CSS reset & normalize */
+@import url('theme.css');        /* Theme variables (dark/light) */
+@import url('base.css');         /* Base HTML/body styles */
+@import url('canvas.css');       /* Canvas and placeholder */
+@import url('ui-elements.css');  /* Buttons, inputs, wordmark, theme button */
+@import url('palette.css');      /* Draggable palette system */
+@import url('components.css');   /* Thumbnails, colors, filters, toast, navigation */
+@import url('utilities.css');    /* Helper classes & state modifiers */

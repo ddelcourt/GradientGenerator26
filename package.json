@@ -7,7 +7,12 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "tauri:build:debug": "tauri build --debug"
+    "tauri:build:debug": "tauri build --debug",
+    "dev": "./scripts/dev.sh",
+    "build": "./scripts/build-production.sh",
+    "build:debug": "./scripts/build-debug.sh",
+    "clean": "./scripts/clean.sh",
+    "fresh-build": "./scripts/clean-and-build.sh"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.0"
