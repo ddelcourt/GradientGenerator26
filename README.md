@@ -64,7 +64,15 @@ php -S localhost:8000
 ├── proxy.js               # Node.js CORS proxy (local dev)
 ├── proxy.php              # PHP CORS proxy (production)
 ├── css/
-│   └── style.css          # Application styles
+│   ├── main.css           # Main stylesheet (imports all modules)
+│   ├── reset.css          # CSS reset & normalize
+│   ├── theme.css          # Theme variables (dark/light)
+│   ├── base.css           # Base HTML/body styles
+│   ├── canvas.css         # Canvas and placeholder
+│   ├── ui-elements.css    # Buttons, inputs, wordmark, theme button
+│   ├── palette.css        # Draggable palette system
+│   ├── components.css     # Thumbnails, colors, filters, toast, navigation
+│   └── utilities.css      # Helper classes & state modifiers
 ├── lib/                   # Modular ES6 libraries
 │   ├── state.js          # Central state management
 │   ├── config.js         # Configuration (create from .example)

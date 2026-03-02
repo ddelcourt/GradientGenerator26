@@ -1,0 +1,205 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   UI ELEMENTS (Buttons, Inputs, Wordmark, Theme Button)
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* Wordmark */
+#wm {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  z-index: 500;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--ac);
+  pointer-events: none;
+  user-select: none;
+}
+
+#wm span {
+  color: var(--tx3);
+  font-size: 11px;
+  font-weight: 400;
+  font-family: 'Inter', sans-serif;
+  margin-left: 7px;
+  letter-spacing: 0.01em;
+}
+
+/* Theme Toggle Button */
+#theme-btn {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 500;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--bhi);
+  background: var(--surf);
+  color: var(--tx);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color .18s, color .18s;
+}
+
+#theme-btn:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+/* Keyboard Hints */
+#kbh {
+  position: fixed;
+  bottom: 18px;
+  right: 20px;
+  z-index: 500;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--tx3);
+  pointer-events: none;
+  transition: opacity .25s;
+}
+
+#kbh kbd {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--tx2);
+}
+
+/* Input Fields */
+.tinp {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg2);
+  border: 1px solid var(--bhi);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--tx);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color .18s;
+}
+
+.tinp:focus {
+  border-color: var(--ac);
+}
+
+.tinp::placeholder {
+  color: var(--tx3);
+}
+
+/* Input Label */
+.ilbl {
+  font-size: 10px;
+  color: var(--tx3);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Action Buttons */
+.abtn {
+  background: transparent;
+  color: var(--tx);
+  border: 1px solid var(--bhi);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color .18s, color .18s, transform .18s;
+}
+
+.abtn:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+.abtn:active {
+  transform: scale(0.97);
+}
+
+.abtn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.abtn.sec {
+  background: var(--bg2);
+  color: var(--tx);
+  border: 1px solid var(--bhi);
+}
+
+.abtn.sec:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+/* Download Button */
+.dlbtn {
+  width: 100%;
+  background: transparent;
+  color: var(--tx);
+  border: 1px solid var(--bhi);
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: border-color .18s, color .18s, transform .18s;
+}
+
+.dlbtn:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+  transform: translateY(-1px);
+}
+
+.dlbtn:active {
+  transform: none;
+}
+
+.dlbtn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Input Row */
+.irow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.irow:last-child {
+  margin-bottom: 0;
+}

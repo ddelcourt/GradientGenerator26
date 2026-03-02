@@ -1,0 +1,28 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES & STATE MODIFIERS
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* UI Visibility States */
+body.ui-hidden .palette {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.ui-hidden #wm,
+body.ui-hidden #theme-btn,
+body.ui-hidden #kbh {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.ui-hidden #kbh {
+  opacity: 0;
+}
+
+/* Fullscreen Mode */
+body.fs-mode #wm,
+body.fs-mode #theme-btn,
+body.fs-mode #kbh {
+  opacity: 0;
+  pointer-events: none;
+}
