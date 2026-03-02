@@ -9,7 +9,7 @@ import { toggleTheme, applyTheme, setRedrawCallback } from './lib/ui.js';
 import { copyHslArray, downloadPaletteImage } from './lib/color-extraction.js';
 import { initializePalettes, restorePalettePositions, toggleCollapse } from './lib/palette-manager.js';
 import { saveApiKey, doSearch, renderResults, selectPhoto, navigatePhoto } from './lib/image-search.js';
-import { initializeCanvas, loadImage, onFilter, resetFilter, resetAllFilters, triggerDownload, initializeKeyboard, initializeFilters, clearImageCache } from './lib/image-control.js';
+import { initializeCanvas, loadImage, onFilter, resetFilter, resetAllFilters, triggerDownload, initializeKeyboard, initializeFilters, clearImageCache, initCursorAutoHide } from './lib/image-control.js';
 import { redraw } from './lib/canvas-renderer.js';
 import { decodeHardcodedKey } from './lib/obfuscate.js';
 import { initializeSlideshowPauseTriggers } from './lib/slideshow.js';
@@ -66,6 +66,9 @@ setRedrawCallback(redraw);
 
 // Initialize keyboard shortcuts
 initializeKeyboard();
+
+// Initialize cursor auto-hide for fullscreen
+initCursorAutoHide();
 
 // Initialize draggable palettes
 initializePalettes();

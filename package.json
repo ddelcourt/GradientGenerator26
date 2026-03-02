@@ -1,0 +1,24 @@
+{
+  "name": "pxls-editor",
+  "version": "1.0.0",
+  "description": "PXLS Image Editor - Pexels image browser with K-means color extraction",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:debug": "tauri build --debug"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.0"
+  },
+  "keywords": [
+    "pexels",
+    "image-editor",
+    "color-extraction",
+    "tauri",
+    "desktop-app"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -1,6 +1,6 @@
 # PXLS Image Editor
 
-A modular browser-based image editor for searching and editing Pexels stock photos with real-time filters.
+A modular browser-based image editor for searching and editing Pexels stock photos with real-time filters. **Now supports Tauri for native desktop builds!**
 
 ## 🎨 Features
 
@@ -13,15 +13,18 @@ A modular browser-based image editor for searching and editing Pexels stock phot
 - **Dark/Light Theme** - Toggle UI themes
 - **Draggable Palettes** - Snap-to-edge UI panels
 - **Keyboard Shortcuts** - Tab, Enter, Esc, R, Arrow keys
+- **Desktop App** - Build native apps for macOS, Windows, Linux with Tauri
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Web App (Browser)
+
+#### Prerequisites
 
 - Node.js (for local development proxy) OR PHP 7.0+ (alternative)
 - Pexels API key ([Get one free here](https://www.pexels.com/api/))
 
-### Local Development
+#### Local Development
 
 **Option 1: Node.js Proxy**
 ```bash
@@ -38,6 +41,23 @@ node proxy.js
 # Runs proxy and web server together
 php -S localhost:8000
 ```
+
+### Desktop App (Tauri)
+
+Build native desktop applications for macOS, Windows, and Linux:
+
+```bash
+# Install dependencies
+npm install
+
+# Development mode
+npm run tauri:dev
+
+# Production build
+npm run tauri:build
+```
+
+**See [TAURI_SETUP.md](TAURI_SETUP.md) for complete instructions, prerequisites, and build configuration.**
 
 ### Configuration
 

@@ -26,3 +26,12 @@ body.fs-mode #kbh {
   opacity: 0;
   pointer-events: none;
 }
+
+/* Cursor Auto-Hide (Fullscreen only) */
+body.cursor-hidden {
+  cursor: none !important;
+}
+
+body.cursor-hidden * {
+  cursor: none !important;
+}
