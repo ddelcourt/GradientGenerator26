@@ -6,7 +6,7 @@
 import { State } from './lib/state.js';
 import { API, CONFIG } from './lib/config.js';
 import { toggleTheme, applyTheme, setRedrawCallback } from './lib/ui.js';
-import { copyHslArray } from './lib/color-extraction.js';
+import { copyHslArray, downloadPaletteImage } from './lib/color-extraction.js';
 import { initializePalettes, restorePalettePositions, toggleCollapse } from './lib/palette-manager.js';
 import { saveApiKey, doSearch, renderResults, selectPhoto, navigatePhoto } from './lib/image-search.js';
 import { initializeCanvas, loadImage, onFilter, resetFilter, resetAllFilters, triggerDownload, initializeKeyboard, initializeFilters, clearImageCache } from './lib/image-control.js';
@@ -76,6 +76,30 @@ restorePalettePositions();
 // Initialize slideshow pause triggers on interactive elements
 initializeSlideshowPauseTriggers();
 
+// Auto-collapse search palette when image control is used
+const imageControlBody = document.getElementById('body-control');
+if (imageControlBody) {
+  // Collapse search palette on filter slider interaction
+  imageControlBody.addEventListener('input', () => {
+    const searchPalette = document.getElementById('pal-search');
+    const searchBody = document.getElementById('body-search');
+    if (searchPalette && searchBody && !searchBody.classList.contains('shut')) {
+      toggleCollapse('search');
+    }
+  });
+  
+  // Collapse search palette on button clicks
+  imageControlBody.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') {
+      const searchPalette = document.getElementById('pal-search');
+      const searchBody = document.getElementById('body-search');
+      if (searchPalette && searchBody && !searchBody.classList.contains('shut')) {
+        toggleCollapse('search');
+      }
+    }
+  });
+}
+
 // Clear cache when window/tab is closed
 window.addEventListener('beforeunload', () => {
   clearImageCache();
@@ -92,6 +116,7 @@ window.navigatePhoto = navigatePhoto;
 window.toggleCollapse = toggleCollapse;
 window.doSearch = (fresh) => doSearch(fresh, loadImage);
 window.copyHslArray = copyHslArray;
+window.downloadPaletteImage = downloadPaletteImage;
 window.resetFilter = resetFilter;
 window.resetAllFilters = resetAllFilters;
 window.triggerDownload = triggerDownload;
