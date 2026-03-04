@@ -6,7 +6,7 @@
 import { State } from './state.js';
 import { API, CONFIG } from './config.js';
 import { toast } from './ui.js';
-import { decodeHardcodedKey } from './obfuscate.js';
+import { decryptApiKey } from './api-key-decrypt.js';
 import { clearImageCache } from './image-control.js';
 
 /**
@@ -14,17 +14,36 @@ import { clearImageCache } from './image-control.js';
  * @returns {string} API key
  */
 function getApiKey() {
+  console.log('[PXLS SEARCH] getApiKey() called');
+  console.log('[PXLS SEARCH]   - API constant exists:', !!API);
+  console.log('[PXLS SEARCH]   - API constant type:', typeof API);
+  
   // If there's a hardcoded encrypted key, use that
   if (API) {
+    console.log('[PXLS SEARCH]   - Using hardcoded API constant');
+    console.log('[PXLS SEARCH]   - API constant length:', API.length);
     try {
-      return decodeHardcodedKey(API);
+      const decrypted = decryptApiKey(API);
+      console.log('[PXLS SEARCH]   - \u2713 Decryption successful, length:', decrypted.length);
+      console.log('[PXLS SEARCH]   - First 10 chars:', decrypted.substring(0, 10) + '...');
+      return decrypted;
     } catch (e) {
-      console.error('Failed to decrypt hardcoded API key:', e);
+      console.error('[PXLS SEARCH]   - \u2717 Failed to decrypt hardcoded API key:', e);
+      console.error('[PXLS SEARCH]   - Error stack:', e.stack);
     }
   }
   
   // Otherwise use the key from input/localStorage
-  return document.getElementById('api-key')?.value.trim() || State.apiKey || '';
+  console.log('[PXLS SEARCH]   - Falling back to input/State');
+  const inputElem = document.getElementById('api-key');
+  const inputValue = inputElem?.value.trim() || '';
+  console.log('[PXLS SEARCH]   - Input element exists:', !!inputElem);
+  console.log('[PXLS SEARCH]   - Input value length:', inputValue.length);
+  console.log('[PXLS SEARCH]   - State.apiKey length:', State.apiKey ? State.apiKey.length : 0);
+  
+  const finalKey = inputValue || State.apiKey || '';
+  console.log('[PXLS SEARCH]   - Final key length:', finalKey.length);
+  return finalKey;
 }
 
 /**
@@ -198,24 +217,6 @@ export function renderResults(loadImageCallback = null) {
 
   area.innerHTML = html;
 
-  // Add event delegation for dynamically created elements
-  area.addEventListener('click', (e) => {
-    // Handle thumbnail clicks
-    const thumbnail = e.target.closest('.titem[data-photo-id]');
-    if (thumbnail) {
-      const photoId = parseInt(thumbnail.getAttribute('data-photo-id'), 10);
-      selectPhoto(photoId);
-      return;
-    }
-
-    // Handle "Load more" button
-    const loadMoreBtn = e.target.closest('[data-action="load-more"]');
-    if (loadMoreBtn) {
-      doSearch(false, loadImageFn);
-      return;
-    }
-  });
-
   // Store photos by id for retrieval
   window._photos = window._photos || {};
   State.results.forEach(p => { window._photos[p.id] = p; });
@@ -260,4 +261,33 @@ export function navigatePhoto(direction) {
   if (newIndex >= State.results.length) newIndex = 0; // wrap to start
   
   selectPhoto(State.results[newIndex].id);
+}
+
+/**
+ * Initialize search event listeners (call once on app startup)
+ */
+export function initializeSearchListeners() {
+  const area = document.getElementById('results-area');
+  if (!area) return;
+  
+  // Event delegation for thumbnail clicks and load more button
+  area.addEventListener('click', (e) => {
+    // Handle thumbnail clicks
+    const thumbnail = e.target.closest('.titem[data-photo-id]');
+    if (thumbnail) {
+      const photoId = parseInt(thumbnail.getAttribute('data-photo-id'), 10);
+      selectPhoto(photoId);
+      return;
+    }
+
+    // Handle "Load more" button
+    const loadMoreBtn = e.target.closest('[data-action="load-more"]');
+    if (loadMoreBtn) {
+      // Get callback from stored reference
+      doSearch(false, window._loadImageCallback);
+      return;
+    }
+  });
+  
+  console.log('[PXLS] Search event listeners initialized (one-time setup)');
 }

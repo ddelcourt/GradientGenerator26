@@ -8,10 +8,10 @@ import { API, CONFIG } from './lib/config.js';
 import { toggleTheme, applyTheme, setRedrawCallback } from './lib/ui.js';
 import { copyHslArray, downloadPaletteImage } from './lib/color-extraction.js';
 import { initializePalettes, restorePalettePositions, toggleCollapse } from './lib/palette-manager.js';
-import { saveApiKey, doSearch, renderResults, selectPhoto, navigatePhoto } from './lib/image-search.js';
+import { saveApiKey, doSearch, renderResults, selectPhoto, navigatePhoto, initializeSearchListeners } from './lib/image-search.js';
 import { initializeCanvas, loadImage, onFilter, resetFilter, resetAllFilters, triggerDownload, initializeKeyboard, initializeFilters, clearImageCache, initCursorAutoHide } from './lib/image-control.js';
 import { redraw } from './lib/canvas-renderer.js';
-import { decodeHardcodedKey } from './lib/obfuscate.js';
+import { decryptApiKey } from './lib/api-key-decrypt.js';
 import { initializeSlideshowPauseTriggers } from './lib/slideshow.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,102 +31,160 @@ if (CONFIG.IS_TAURI) {
   console.log('[PXLS] Loaded Tauri performance optimizations');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// API KEY INITIALIZATION (non-DOM operations only)
+// ─────────────────────────────────────────────────────────────────────────────
+let hasHardcodedApiKey = false;
+
 // Handle API key initialization
+console.log('[PXLS API] Starting API key initialization...');
+console.log('[PXLS API] API constant exists:', !!API);
+console.log('[PXLS API] API constant type:', typeof API);
 if (API) {
-  // If there's a hardcoded encrypted key, hide the API key input palette
+  console.log('[PXLS API] API constant value (first 30 chars):', API.substring(0, 30) + '...');
+  console.log('[PXLS API] API constant length:', API.length);
+  // If there's a hardcoded encrypted key, decrypt it
   try {
-    console.log('[PXLS] Encrypted API key found, length:', API.length);
-    const decryptedKey = decodeHardcodedKey(API);
-    console.log('[PXLS] Decrypted API key, length:', decryptedKey.length);
+    console.log('[PXLS API] Attempting to decrypt hardcoded API key...');
+    const decryptedKey = decryptApiKey(API);
+    console.log('[PXLS API] ✓ Decryption successful!');
+    console.log('[PXLS API]   - Decrypted key length:', decryptedKey.length);
+    console.log('[PXLS API]   - Decrypted key (first 10 chars):', decryptedKey.substring(0, 10) + '...');
     State.apiKey = decryptedKey;
-    // Hide the API key palette since it's hardcoded
-    const apiPalette = document.getElementById('pal-api');
-    if (apiPalette) {
-      apiPalette.style.display = 'none';
-      console.log('[PXLS] API key palette hidden');
-    }
-    console.log('[PXLS] Using app API key');
+    console.log('[PXLS API]   - Stored in State.apiKey');
+    hasHardcodedApiKey = true;
+    console.log('[PXLS API]   - Set hasHardcodedApiKey = true');
+    console.log('[PXLS API] ✓ Using hardcoded API key');
   } catch (e) {
-    console.error('[PXLS] Failed to decrypt hardcoded API key:', e);
-    console.error('[PXLS] API constant value:', API.substring(0, 20) + '...');
+    console.error('[PXLS API] ✗ Failed to decrypt hardcoded API key!');
+    console.error('[PXLS API]   - Error:', e);
+    console.error('[PXLS API]   - Error stack:', e.stack);
+    console.error('[PXLS API]   - API constant value:', API.substring(0, 20) + '...');
   }
 } else {
+  console.log('[PXLS API] No hardcoded API key found');
   // Restore API key from localStorage if no hardcoded key
   const savedKey = localStorage.getItem('pxls_ak');
+  console.log('[PXLS API] Checking localStorage for saved key...');
+  console.log('[PXLS API]   - localStorage key exists:', !!savedKey);
   if (savedKey) {
+    console.log('[PXLS API]   - Saved key length:', savedKey.length);
     State.apiKey = savedKey;
-    const apiInput = document.getElementById('api-key');
-    if (apiInput) apiInput.value = savedKey;
+    console.log('[PXLS API] ✓ Using saved API key from localStorage');
+  } else {
+    console.log('[PXLS API] ✗ No saved key in localStorage');
   }
 }
 
-// Clear image cache on app initialization (fresh start every session)
-clearImageCache();
-
-// Apply theme
-const savedTheme = localStorage.getItem('pxls_theme') || 'dark';
-State.theme = savedTheme;
-applyTheme(savedTheme);
-
-// Initialize canvas and resize handling
-initializeCanvas();
-
-// Initialize filter UI (sync sliders with State)
-initializeFilters();
-
-// Set up redraw callback for theme changes
-setRedrawCallback(redraw);
-
-// Initialize keyboard shortcuts
-initializeKeyboard();
-
-// Initialize cursor auto-hide for fullscreen
-initCursorAutoHide();
-
-// Initialize draggable palettes
-initializePalettes();
-
-// Restore palette positions from localStorage
-restorePalettePositions();
-
-// Initialize slideshow pause triggers on interactive elements
-initializeSlideshowPauseTriggers();
-
-// Auto-collapse search palette when image control is used
-const imageControlBody = document.getElementById('body-control');
-if (imageControlBody) {
-  // Collapse search palette on filter slider interaction
-  imageControlBody.addEventListener('input', () => {
-    const searchPalette = document.getElementById('pal-search');
-    const searchBody = document.getElementById('body-search');
-    if (searchPalette && searchBody && !searchBody.classList.contains('shut')) {
-      toggleCollapse('search');
-    }
-  });
+// ─────────────────────────────────────────────────────────────────────────────
+// DOM-DEPENDENT INITIALIZATION (runs after DOM is ready)
+// ─────────────────────────────────────────────────────────────────────────────
+function initializeAfterDOM() {
+  console.log('[PXLS DOM] === Initializing app after DOM loaded ===');
+  console.log('[PXLS DOM] Checking status...');
+  console.log('[PXLS DOM]   - hasHardcodedApiKey:', hasHardcodedApiKey);
+  console.log('[PXLS DOM]   - State.apiKey exists:', !!State.apiKey);
+  console.log('[PXLS DOM]   - State.apiKey length:', State.apiKey ? State.apiKey.length : 0);
   
-  // Collapse search palette on button clicks
-  imageControlBody.addEventListener('click', (e) => {
-    if (e.target.tagName === 'BUTTON') {
+  // Hide API key palette if we have a hardcoded key
+  if (hasHardcodedApiKey) {
+    console.log('[PXLS DOM] Has hardcoded key, attempting to hide API palette...');
+    const apiPalette = document.getElementById('pal-api');
+    console.log('[PXLS DOM]   - Found pal-api element:', !!apiPalette);
+    if (apiPalette) {
+      apiPalette.style.display = 'none';
+      console.log('[PXLS DOM] \u2713 API key palette hidden successfully');
+    } else {
+      console.warn('[PXLS DOM] \u2717 Could not find pal-api element to hide!');
+    }
+  } else {
+    // Restore saved API key to input field
+    const savedKey = localStorage.getItem('pxls_ak');
+    if (savedKey) {
+      const apiInput = document.getElementById('api-key');
+      if (apiInput) apiInput.value = savedKey;
+    }
+  }
+
+  // Clear image cache on app initialization (fresh start every session)
+  clearImageCache();
+
+  // Apply theme
+  const savedTheme = localStorage.getItem('pxls_theme') || 'dark';
+  State.theme = savedTheme;
+  applyTheme(savedTheme);
+
+  // Initialize canvas and resize handling
+  initializeCanvas();
+
+  // Initialize filter UI (sync sliders with State)
+  initializeFilters();
+
+  // Set up redraw callback for theme changes
+  setRedrawCallback(redraw);
+
+  // Initialize keyboard shortcuts
+  initializeKeyboard();
+
+  // Initialize cursor auto-hide for fullscreen
+  initCursorAutoHide();
+
+  // Initialize draggable palettes
+  initializePalettes();
+
+  // Restore palette positions from localStorage
+  restorePalettePositions();
+
+  // Initialize slideshow pause triggers on interactive elements
+  initializeSlideshowPauseTriggers();
+
+  // Auto-collapse search palette when image control is used
+  const imageControlBody = document.getElementById('body-control');
+  if (imageControlBody) {
+    // Collapse search palette on filter slider interaction
+    imageControlBody.addEventListener('input', () => {
       const searchPalette = document.getElementById('pal-search');
       const searchBody = document.getElementById('body-search');
       if (searchPalette && searchBody && !searchBody.classList.contains('shut')) {
         toggleCollapse('search');
       }
-    }
-  });
-}
+    });
+  
+    // Collapse search palette on button clicks
+    imageControlBody.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const searchPalette = document.getElementById('pal-search');
+        const searchBody = document.getElementById('body-search');
+        if (searchPalette && searchBody && !searchBody.classList.contains('shut')) {
+          toggleCollapse('search');
+        }
+      }
+    });
+  }
 
-// Clear cache when window/tab is closed
-window.addEventListener('beforeunload', () => {
-  clearImageCache();
-  console.log('[PXLS] Cache cleared on window close');
-});
+  // Clear cache when window/tab is closed
+  window.addEventListener('beforeunload', () => {
+    clearImageCache();
+    console.log('[PXLS] Cache cleared on window close');
+  });
+
+  // Initialize event listeners
+  initializeEventListeners();
+
+  // Expose selectPhoto for dynamically generated search results
+  window.selectPhoto = selectPhoto;
+
+  console.log('[PXLS] Editor initialized');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EVENT LISTENERS INITIALIZATION (CSP-compliant, no inline handlers)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function initializeEventListeners() {
+  // Initialize search result listeners (one-time setup for event delegation)
+  initializeSearchListeners();
+  
   // Theme toggle button
   const themeBtn = document.getElementById('theme-btn');
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
@@ -199,10 +257,7 @@ function initializeEventListeners() {
   console.log('[PXLS] Event listeners initialized (CSP-compliant)');
 }
 
-// Initialize event listeners after DOM is ready
-initializeEventListeners();
-
-// Export selectPhoto for dynamic results (called by renderResults)
-window.selectPhoto = selectPhoto;
-
-console.log('[PXLS] Editor initialized');
+// ─────────────────────────────────────────────────────────────────────────────
+// START APPLICATION (call after all functions are defined)
+// ─────────────────────────────────────────────────────────────────────────────
+initializeAfterDOM();

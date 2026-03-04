@@ -6,6 +6,53 @@
 import { State } from './state.js';
 import { updateExtractedColors } from './color-extraction.js';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BLUR CALIBRATION
+// ─────────────────────────────────────────────────────────────────────────────
+// Adjust this multiplier to match exported blur to screen CSS blur
+// CSS blur uses true Gaussian blur (GPU-accelerated)
+// Our export uses 3-pass box blur (approximation)
+// 
+// To calibrate:
+// 1. Set blur slider to a known value (e.g. 10px)
+// 2. Export image and compare visually to screen
+// 3. Adjust multiplier up if export is too weak, down if too strong
+// 4. Typical range: 1.0-2.5 (start at 1.25)
+const BLUR_EXPORT_MULTIPLIER = 1.25;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OFFSCREEN CANVAS POOL (reuse to prevent memory leaks)
+// ─────────────────────────────────────────────────────────────────────────────
+let offscreenCanvas = null;
+let offscreenCtx = null;
+
+/**
+ * Get or reuse offscreen canvas for rendering
+ * Reusing a single canvas prevents memory leaks in Tauri
+ */
+function getOffscreenCanvas(width, height) {
+  if (!offscreenCanvas) {
+    offscreenCanvas = document.createElement('canvas');
+    offscreenCtx = offscreenCanvas.getContext('2d', {
+      alpha: true,
+      colorSpace: 'srgb',
+      willReadFrequently: false
+    });
+    console.log('[PXLS] Created reusable offscreen canvas');
+  }
+  
+  // Only resize if dimensions changed
+  if (offscreenCanvas.width !== width || offscreenCanvas.height !== height) {
+    offscreenCanvas.width = width;
+    offscreenCanvas.height = height;
+  }
+  
+  // Clear before use
+  offscreenCtx.clearRect(0, 0, width, height);
+  
+  return { canvas: offscreenCanvas, ctx: offscreenCtx };
+}
+
 /**
  * Redraw the canvas with current image and filters
  * Uses padded canvas technique for clean blur edges
@@ -31,15 +78,8 @@ export function redraw() {
 
   const f = State.filters;
 
-  // Use an offscreen canvas to apply pixel filters
-  const off = document.createElement('canvas');
-  off.width  = Math.round(dw);
-  off.height = Math.round(dh);
-  const octx = off.getContext('2d', {
-    alpha: true,
-    colorSpace: 'srgb',
-    willReadFrequently: false
-  });
+  // Use reusable offscreen canvas (critical for memory management)
+  const { canvas: off, ctx: octx } = getOffscreenCanvas(Math.round(dw), Math.round(dh));
   octx.drawImage(State.loadedImg, 0, 0, off.width, off.height);
 
   // Apply pixel-level filters (brightness, contrast, saturation)
@@ -79,25 +119,67 @@ export function redraw() {
 }
 
 /**
- * Render full-resolution image with filters for download
+ * Render canvas for download - exports with scaled filters for full resolution
  * @returns {Promise<HTMLCanvasElement>} Canvas with processed image
  */
 export function renderFullResolution() {
   return new Promise((resolve, reject) => {
     try {
-      const f   = State.filters;
-      const off = document.createElement('canvas');
-      off.width  = State.origW;
-      off.height = State.origH;
-      const octx = off.getContext('2d', {
-        alpha: true,
-        colorSpace: 'srgb',
-        willReadFrequently: false
-      });
-      octx.drawImage(State.loadedImg, 0, 0);
-
+      const f = State.filters;
+      const mainCanvas = document.getElementById('main-canvas');
+      
+      // Calculate the fitted image display size (same logic as redraw())
+      const W = mainCanvas.width;
+      const H = mainCanvas.height;
+      const ir = State.loadedImg.width / State.loadedImg.height;
+      const cr = W / H;
+      let dw, dh;
+      if (ir > cr) { 
+        dw = W; 
+        dh = W / ir; 
+      } else { 
+        dh = H; 
+        dw = H * ir; 
+      }
+      
+      // Calculate blur scale ratio based on actual fitted image size
+      // This ensures blur looks the same relative to image content
+      const blurScale = State.origW / dw;
+      
+      // Detect retina/high-DPI display for debugging
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      
+      // Note: CSS blur() is already DPI-aware and operates in CSS pixels
+      // We don't need to adjust for devicePixelRatio because both the display
+      // and the blur are measured in CSS pixels, which abstract physical pixels
+      
+      // Debug logging
+      console.log('═══════════════════════════════════════════════════════════');
+      console.log('[PXLS Export] BLUR CALIBRATION DATA');
+      console.log('═══════════════════════════════════════════════════════════');
+      console.log('[PXLS Export] Screen blur setting:', f.blur, 'px (CSS blur value)');
+      console.log('[PXLS Export] Display canvas size:', W, 'x', H, 'CSS pixels');
+      console.log('[PXLS Export] Fitted display size:', Math.round(dw), 'x', Math.round(dh), 'CSS pixels');
+      console.log('[PXLS Export] Original image size:', State.origW, 'x', State.origH, 'physical pixels');
+      console.log('[PXLS Export] Device pixel ratio:', devicePixelRatio, devicePixelRatio === 2 ? '(Retina)' : devicePixelRatio > 2 ? '(High-DPI)' : '(Standard)');
+      console.log('[PXLS Export] Resolution scale:', blurScale.toFixed(3), 'x (full res / fitted display)');
+      console.log('[PXLS Export] Blur multiplier:', BLUR_EXPORT_MULTIPLIER, '(adjustable constant)');
+      console.log('───────────────────────────────────────────────────────────');
+      
+      // Create full resolution canvas
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = State.origW;
+      exportCanvas.height = State.origH;
+      const ctx = exportCanvas.getContext('2d');
+      
+      // Draw original image
+      ctx.drawImage(State.loadedImg, 0, 0);
+      console.log('[PXLS Export] Drew original image');
+      
+      // Apply pixel-level filters (brightness, contrast, saturation)
       if (f.brightness !== 0 || f.contrast !== 0 || f.saturation !== 0) {
-        const id = octx.getImageData(0, 0, off.width, off.height);
+        console.log('[PXLS Export] Applying brightness/contrast/saturation...');
+        const id = ctx.getImageData(0, 0, exportCanvas.width, exportCanvas.height);
         const px = id.data;
         const br = f.brightness * 2.55;
         const cf = f.contrast !== 0 ? (259 * (f.contrast + 255)) / (255 * (259 - f.contrast)) : 1;
@@ -111,100 +193,117 @@ export function renderFullResolution() {
           px[i + 1] = Math.max(0, Math.min(255, g));
           px[i + 2] = Math.max(0, Math.min(255, b));
         }
-        octx.putImageData(id, 0, 0);
+        ctx.putImageData(id, 0, 0);
+        console.log('[PXLS Export] Applied color filters');
       }
-
-// Blur at full res
-      // For Tauri/WebKit compatibility, use a manual blur algorithm instead of ctx.filter
-      let finalCanvas = off;
+      
+      // Apply Gaussian blur scaled to full resolution
+      // Multiply by calibration constant to match CSS blur appearance
       if (f.blur > 0) {
-        // Apply manual box blur for export compatibility
-        finalCanvas = applyBoxBlur(off, f.blur);
+        const scaledBlur = Math.round(f.blur * blurScale * BLUR_EXPORT_MULTIPLIER);
+        console.log('[PXLS Export] Blur calculation:');
+        console.log('  Formula: screenBlur × resolutionScale × multiplier');
+        console.log('  Values:', f.blur, '×', blurScale.toFixed(3), '×', BLUR_EXPORT_MULTIPLIER);
+        console.log('  Result:', scaledBlur, 'px (applied to full-res image)');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('[PXLS Export] Applying 3-pass box blur...');
+        const blurred = applyGaussianBlur(exportCanvas, scaledBlur);
+        console.log('[PXLS Export] ✓ Blur complete');
+        console.log('═══════════════════════════════════════════════════════════');
+        resolve(blurred);
+      } else {
+        console.log('[PXLS Export] No blur, returning canvas');
+        resolve(exportCanvas);
       }
-
-      resolve(finalCanvas);
     } catch(e) {
+      console.error('[PXLS Export] Error:', e);
       reject(e);
     }
   });
 }
 
 /**
- * Apply box blur to a canvas (compatible with all browsers including WebKit)
- * @param {HTMLCanvasElement} sourceCanvas - Source canvas
- * @param {number} radius - Blur radius in pixels
- * @returns {HTMLCanvasElement} Blurred canvas
+ * Apply Gaussian blur to canvas using multiple box blur passes
+ * Approximates true Gaussian blur for export
+ * CSS blur(r) ≈ Gaussian with stdDev = r (approximately)
  */
-function applyBoxBlur(sourceCanvas, radius) {
+function applyGaussianBlur(sourceCanvas, radius) {
+  if (radius <= 0) return sourceCanvas;
+  
   const canvas = document.createElement('canvas');
   canvas.width = sourceCanvas.width;
   canvas.height = sourceCanvas.height;
   const ctx = canvas.getContext('2d');
-  
-  // Draw source to new canvas
   ctx.drawImage(sourceCanvas, 0, 0);
   
-  // Get image data
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const pixels = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
+  // CSS blur(r) uses Gaussian with stdDev ≈ r (W3C spec)
+  // For 3 box blur passes to approximate Gaussian:
+  // Each pass radius = sqrt((stdDev^2) / passes) = sqrt(r^2 / 3)
+  const passes = 3;
+  const stdDev = radius;
+  const boxRadius = Math.ceil(Math.sqrt((stdDev * stdDev) / passes));
   
-  // Apply horizontal box blur
-  const tempData = new Uint8ClampedArray(pixels);
-  const r = Math.min(Math.ceil(radius / 2), 100); // Limit radius for performance
+  console.log(`[PXLS Blur] Radius: ${radius}px → stdDev: ${stdDev} → box radius: ${boxRadius}px × ${passes} passes`);
   
-  // Horizontal pass
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
-      
-      for (let kx = -r; kx <= r; kx++) {
-        const px = x + kx;
-        if (px >= 0 && px < width) {
-          const idx = (y * width + px) * 4;
-          rSum += pixels[idx];
-          gSum += pixels[idx + 1];
-          bSum += pixels[idx + 2];
-          aSum += pixels[idx + 3];
-          count++;
-        }
-      }
-      
-      const idx = (y * width + x) * 4;
-      tempData[idx] = rSum / count;
-      tempData[idx + 1] = gSum / count;
-      tempData[idx + 2] = bSum / count;
-      tempData[idx + 3] = aSum / count;
-    }
-  }
-  
-  // Vertical pass
-  for (let x = 0; x < width; x++) {
+  for (let pass = 0; pass < passes; pass++) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+    const tempData = new Uint8ClampedArray(pixels);
+    
+    // Horizontal pass
     for (let y = 0; y < height; y++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
-      
-      for (let ky = -r; ky <= r; ky++) {
-        const py = y + ky;
-        if (py >= 0 && py < height) {
-          const idx = (py * width + x) * 4;
-          rSum += tempData[idx];
-          gSum += tempData[idx + 1];
-          bSum += tempData[idx + 2];
-          aSum += tempData[idx + 3];
-          count++;
+      for (let x = 0; x < width; x++) {
+        let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        
+        for (let kx = -boxRadius; kx <= boxRadius; kx++) {
+          const px = x + kx;
+          if (px >= 0 && px < width) {
+            const idx = (y * width + px) * 4;
+            rSum += pixels[idx];
+            gSum += pixels[idx + 1];
+            bSum += pixels[idx + 2];
+            aSum += pixels[idx + 3];
+            count++;
+          }
         }
+        
+        const idx = (y * width + x) * 4;
+        tempData[idx] = rSum / count;
+        tempData[idx + 1] = gSum / count;
+        tempData[idx + 2] = bSum / count;
+        tempData[idx + 3] = aSum / count;
       }
-      
-      const idx = (y * width + x) * 4;
-      pixels[idx] = rSum / count;
-      pixels[idx + 1] = gSum / count;
-      pixels[idx + 2] = bSum / count;
-      pixels[idx + 3] = aSum / count;
     }
+    
+    // Vertical pass
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
+        let rSum = 0, gSum = 0, bSum = 0, aSum = 0, count = 0;
+        
+        for (let ky = -boxRadius; ky <= boxRadius; ky++) {
+          const py = y + ky;
+          if (py >= 0 && py < height) {
+            const idx = (py * width + x) * 4;
+            rSum += tempData[idx];
+            gSum += tempData[idx + 1];
+            bSum += tempData[idx + 2];
+            aSum += tempData[idx + 3];
+            count++;
+          }
+        }
+        
+        const idx = (y * width + x) * 4;
+        pixels[idx] = rSum / count;
+        pixels[idx + 1] = gSum / count;
+        pixels[idx + 2] = bSum / count;
+        pixels[idx + 3] = aSum / count;
+      }
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
   }
   
-  // Put blurred image data back
-  ctx.putImageData(imageData, 0, 0);
   return canvas;
 }

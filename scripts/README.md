@@ -10,10 +10,15 @@ This folder contains all build and development scripts for the PXLS Editor Tauri
   - Opens development app with live code changes
 
 ### Building
-- **`build-production.sh`** - Build optimized production version
+- **`build-production.sh`** - Build optimized production version (.app only)
   - Run with: `npm run build` or `./scripts/build-production.sh`
   - Creates release build in `src-tauri/target/release/bundle/`
-  - Outputs `.app` and `.dmg` files
+  - Outputs: `.app` bundle only (faster build)
+
+- **`build-with-dmg.sh`** - Build production version with DMG installer
+  - Run with: `npm run build:dmg` or `./scripts/build-with-dmg.sh`
+  - Creates both `.app` and `.dmg` files
+  - Use when ready to distribute to other Macs
 
 - **`build-debug.sh`** - Build debug version with DevTools
   - Run with: `npm run build:debug` or `./scripts/build-debug.sh`

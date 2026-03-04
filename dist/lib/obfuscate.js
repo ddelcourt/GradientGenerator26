@@ -37,8 +37,14 @@ export function encrypt(text, key) {
  * @returns {string} Decrypted plain text
  */
 export function decrypt(encrypted, key) {
+  console.log('[OBFUSCATE] decrypt() called');
+  console.log('[OBFUSCATE]   - Encrypted input length:', encrypted.length);
+  console.log('[OBFUSCATE]   - Key length:', key.length);
   const decoded = atob(encrypted);
+  console.log('[OBFUSCATE]   - Base64 decoded length:', decoded.length);
   const xored = xorCipher(decoded, key);
+  console.log('[OBFUSCATE]   - XOR decrypted result length:', xored.length);
+  console.log('[OBFUSCATE]   - First 10 chars:', xored.substring(0, 10));
   return xored;
 }
 
@@ -84,5 +90,11 @@ export function retrieveKey() {
  * @returns {string} Decrypted key
  */
 export function decodeHardcodedKey(obfuscated) {
-  return decrypt(obfuscated, _getKey());
+  console.log('[OBFUSCATE] decodeHardcodedKey() called');
+  console.log('[OBFUSCATE]   - Obfuscated input:', obfuscated.substring(0, 20) + '...');
+  const key = _getKey();
+  console.log('[OBFUSCATE]   - Using key:', key);
+  const result = decrypt(obfuscated, key);
+  console.log('[OBFUSCATE]   - Decryption complete, result length:', result.length);
+  return result;
 }

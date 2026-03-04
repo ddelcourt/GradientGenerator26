@@ -6,11 +6,13 @@
   "scripts": {
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "tauri:build:debug": "tauri build --debug",
+    "tauri:build": "tauri build --bundles app --target universal-apple-darwin",
+    "tauri:build:debug": "tauri build --debug --bundles app",
+    "tauri:build:dmg": "tauri build --bundles dmg --target universal-apple-darwin",
     "dev": "./scripts/dev.sh",
     "build": "./scripts/build-production.sh",
     "build:debug": "./scripts/build-debug.sh",
+    "build:dmg": "./scripts/build-with-dmg.sh",
     "clean": "./scripts/clean.sh",
     "fresh-build": "./scripts/clean-and-build.sh"
   },

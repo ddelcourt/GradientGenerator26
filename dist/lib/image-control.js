@@ -46,16 +46,46 @@ export function initCursorAutoHide() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// IMAGE CACHE (in-memory, clears on page reload)
+// IMAGE CACHE (LRU with max 10 images - critical for Tauri memory management)
 // ─────────────────────────────────────────────────────────────────────────────
+const MAX_CACHED_IMAGES = 10;
 const imageCache = new Map(); // URL → HTMLImageElement
+const cacheOrder = []; // Track insertion order for LRU
 
 /**
- * Clear image cache (automatic on page reload, can also be called manually)
+ * Clear image cache and release memory
  */
 export function clearImageCache() {
+  // Explicitly clear image sources to help GC
+  for (const img of imageCache.values()) {
+    if (img && img.src) {
+      img.onload = null;
+      img.onerror = null;
+      img.src = '';
+    }
+  }
   imageCache.clear();
+  cacheOrder.length = 0;
   console.log('[PXLS] Image cache cleared');
+}
+
+/**
+ * Evict oldest image from cache
+ */
+function evictOldestImage() {
+  if (cacheOrder.length === 0) return;
+  
+  const oldestUrl = cacheOrder.shift();
+  const oldImg = imageCache.get(oldestUrl);
+  
+  if (oldImg) {
+    // Explicitly clear to help garbage collector
+    oldImg.onload = null;
+    oldImg.onerror = null;
+    oldImg.src = '';
+    imageCache.delete(oldestUrl);
+    console.log('[PXLS] Evicted from cache:', oldestUrl.slice(-30), `(cache: ${imageCache.size}/${MAX_CACHED_IMAGES})`);
+  }
 }
 
 /**
@@ -104,15 +134,43 @@ export function initializeCanvas() {
 }
 
 /**
+ * Clean up resources before loading new image
+ */
+function cleanupBeforeLoad() {
+  // Clear previous image reference to help GC
+  if (State.loadedImg) {
+    State.loadedImg = null;
+  }
+  
+  // Clear extracted colors
+  State.extractedColors = [];
+  
+  // Hint to garbage collector (non-standard but helps in some engines)
+  if (typeof global !== 'undefined' && global.gc) {
+    global.gc();
+  }
+}
+
+/**
  * Load image from URL
  * @param {string} url - Image URL to load
  */
 export function loadImage(url) {
+  // Clean up previous image resources
+  cleanupBeforeLoad();
+  
   // Check if image is already cached
   const cachedImage = imageCache.get(url);
   if (cachedImage) {
     console.log('[PXLS] Using cached image:', url.slice(-30));
     toast('Image loaded from cache ✓');
+    
+    // Move to end of cache order (mark as recently used)
+    const index = cacheOrder.indexOf(url);
+    if (index > -1) {
+      cacheOrder.splice(index, 1);
+    }
+    cacheOrder.push(url);
     
     // Reuse cached image immediately
     State.loadedImg = cachedImage;
@@ -143,10 +201,23 @@ export function loadImage(url) {
   
   const img = new Image();
   img.crossOrigin = 'anonymous';
+  
+  let hasLoaded = false;
+  let hasFailed = false;
+  
   img.onload = () => {
+    if (hasFailed) return; // Ignore if already failed
+    hasLoaded = true;
+    
+    // Evict oldest images if cache is full
+    while (imageCache.size >= MAX_CACHED_IMAGES) {
+      evictOldestImage();
+    }
+    
     // Cache the loaded image
     imageCache.set(url, img);
-    console.log('[PXLS] Image cached:', url.slice(-30), `(cache size: ${imageCache.size})`);
+    cacheOrder.push(url);
+    console.log('[PXLS] Image cached:', url.slice(-30), `(cache: ${imageCache.size}/${MAX_CACHED_IMAGES})`);
     
     State.loadedImg = img;
     State.origW = img.naturalWidth;
@@ -162,7 +233,14 @@ export function loadImage(url) {
     // Start slideshow (auto-advance after 10 seconds)
     resumeSlideshow(() => navigatePhoto(1));
   };
-  img.onerror = () => toast('Could not load image');
+  
+  img.onerror = (e) => {
+    if (hasLoaded) return; // Ignore if already loaded successfully
+    hasFailed = true;
+    
+    console.error('[PXLS] Image load error:', url, e);
+    toast('Failed to load image ✗');
+  };
   
   // Route image URL based on environment
   let imgUrl;
